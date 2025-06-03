@@ -1,0 +1,5 @@
+# Agent 專用依賴
+flask
+requests
+python-dotenv
+psutil

@@ -1,0 +1,6 @@
+python-telegram-bot
+requests
+matplotlib
+flask
+python-dotenv
+psutil
