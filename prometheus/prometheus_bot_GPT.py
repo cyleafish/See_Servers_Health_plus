@@ -12,7 +12,7 @@ plt.rcParams['font.family'] = 'Noto Sans CJK JP'  # 你有安裝 Noto Sans CJK J
 plt.rcParams['axes.unicode_minus'] = False
 
 # === Bot Token & Prometheus URL ===
-BOT_TOKEN = '8114141180:AAFrHkrSkomz0eswNDSoh7uTSTTihZsz4Rk'
+BOT_TOKEN = ''
 PROMETHEUS_URL = 'http://localhost:9090'
 
 
