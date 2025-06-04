@@ -4,6 +4,7 @@ import time
 import threading
 from dotenv import load_dotenv
 import os
+from datetime import datetime
 
 load_dotenv()
 
@@ -177,6 +178,71 @@ def broadcast_command():
             results[agent_id] = {"success": False, "result": f"Error: {str(e)}"}
     
     return jsonify({"broadcast_results": results})
+
+@app.route("/alerts", methods=["POST"])
+def receive_alerts():
+    """接收 Alertmanager 告警並轉發到 Telegram"""
+    try:
+        alerts_data = request.json
+        alerts = alerts_data.get("alerts", [])
+        
+        for alert in alerts:
+            status = alert.get("status", "unknown")
+            alert_name = alert.get("labels", {}).get("alertname", "Unknown Alert")
+            instance = alert.get("labels", {}).get("instance", "Unknown Instance")
+            severity = alert.get("labels", {}).get("severity", "info")
+            message = alert.get("annotations", {}).get("summary", "No description")
+            
+            # 根據嚴重程度選擇 emoji
+            emoji_map = {
+                "critical": "🔴",
+                "warning": "🟡", 
+                "info": "🔵"
+            }
+            emoji = emoji_map.get(severity, "⚠️")
+            
+            # 組合 Telegram 消息
+            telegram_message = f"""{emoji} **ALERT {status.upper()}**
+📛 Alert: {alert_name}
+📍 Instance: {instance}
+⚡ Severity: {severity}
+💬 Message: {message}
+🕐 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
+            
+            # 發送到 Telegram
+            send_alert_to_telegram(telegram_message)
+        
+        return jsonify({"success": True, "message": f"Processed {len(alerts)} alerts"})
+        
+    except Exception as e:
+        print(f"❌ Alert processing error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+def send_alert_to_telegram(message):
+    """發送告警到 Telegram"""
+    try:
+        BOT_TOKEN = os.getenv("BOT_TOKEN")
+        ALERT_CHAT_ID = os.getenv("ALERT_CHAT_ID")  # 新增環境變數，設定告警接收的聊天室 ID
+        
+        if not BOT_TOKEN or not ALERT_CHAT_ID:
+            print("❌ Missing BOT_TOKEN or ALERT_CHAT_ID")
+            return
+        
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        data = {
+            "chat_id": ALERT_CHAT_ID,
+            "text": message,
+            "parse_mode": "Markdown"
+        }
+        
+        response = requests.post(url, json=data, timeout=10)
+        if response.status_code == 200:
+            print("✅ Alert sent to Telegram")
+        else:
+            print(f"❌ Failed to send alert: {response.status_code}")
+            
+    except Exception as e:
+        print(f"❌ Telegram send error: {e}")
 
 def cleanup_dead_agents():
     """Periodically remove agents that haven't sent heartbeat"""

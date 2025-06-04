@@ -4,3 +4,4 @@ matplotlib
 flask
 python-dotenv
 psutil
+prometheus_client

@@ -5,6 +5,8 @@ import time
 import threading
 from dotenv import load_dotenv
 import json
+import psutil
+from prometheus_client import generate_latest, CollectorRegistry, Gauge, Counter
 
 # 導入 Agent 專用模組
 from agent_modules.shell_ops import execute_shell_command
@@ -23,6 +25,32 @@ SERVER_URL = os.getenv("SERVER_URL", "http://localhost:8002")
 
 # 初始化登入監控器
 login_watcher = LoginWatcher(SERVER_URL, AGENT_ID)
+
+# Prometheus metrics 初始化
+registry = CollectorRegistry()
+cpu_usage = Gauge('agent_cpu_usage_percent', 'CPU usage percentage', ['agent_id'], registry=registry)
+memory_usage = Gauge('agent_memory_usage_percent', 'Memory usage percentage', ['agent_id'], registry=registry)
+disk_usage = Gauge('agent_disk_usage_percent', 'Disk usage percentage', ['agent_id'], registry=registry)
+requests_total = Counter('agent_requests_total', 'Total requests', ['agent_id', 'method', 'endpoint'], registry=registry)
+
+def update_system_metrics():
+    """更新系統指標"""
+    try:
+        cpu_usage.labels(agent_id=AGENT_ID).set(psutil.cpu_percent())
+        memory_usage.labels(agent_id=AGENT_ID).set(psutil.virtual_memory().percent)
+        disk_usage.labels(agent_id=AGENT_ID).set(psutil.disk_usage('/').percent)
+    except Exception as e:
+        print(f"⚠️ Metrics update error: {e}")
+
+@app.route("/metrics", methods=["GET"])
+def metrics():
+    """Prometheus metrics endpoint"""
+    try:
+        update_system_metrics()
+        requests_total.labels(agent_id=AGENT_ID, method="GET", endpoint="/metrics").inc()
+        return generate_latest(registry), 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    except Exception as e:
+        return f"Error generating metrics: {e}", 500
 
 @app.route("/exec", methods=["POST"])
 def exec_cmd():
@@ -70,6 +98,10 @@ def handle_login_command(cmd):
 def health_check():
     """Health check endpoint for the server"""
     try:
+        # 更新 Prometheus metrics
+        update_system_metrics()
+        requests_total.labels(agent_id=AGENT_ID, method="GET", endpoint="/health").inc()
+        
         # 使用 monitoring 模組的功能
         cpu_info = handle_monitoring_command("cpu")
         mem_info = handle_monitoring_command("mem")

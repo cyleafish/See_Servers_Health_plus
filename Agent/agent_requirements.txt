@@ -3,3 +3,4 @@ flask
 requests
 python-dotenv
 psutil
+prometheus_client
