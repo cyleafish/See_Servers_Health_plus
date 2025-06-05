@@ -1,5 +1,5 @@
 # Agent 配置範例
 AGENT_ID=agent1
-AGENT_HOST=0.0.0.0
+AGENT_HOST=0.0.0.0 # AGENT ip
 AGENT_PORT=8001
 SERVER_URL=http://your-central-server:8002

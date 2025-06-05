@@ -22,10 +22,10 @@ SERVER_URL = os.getenv("SERVER_URL", "http://localhost:8002")
 
 #按鈕
 custom_keyboard = [
-    ["/op_exec agent1 ps", "/op_port agent1", "/op_stop agent1"],
-    ["/agents", "/mon_cpu agent1", "/broadcast ps"],
-    ["/mon_mem agent1", "/mon_disk agent1"],
-    ["/chart agent1 cpu", "/prom_chart agent1 agent_cpu_usage_percent"],
+    ["/agents","/broadcast ps"],
+    ["/op_exec Agent1 ps", "/op_port Agent1", "/op_stop Agent1"],
+    ["/mon_cpu Agent1","/mon_mem Agent1", "/mon_disk Agent1"],
+    ["/mon_cpu_picture", "/mon_cpu_picture Agent1"],
     ["/more", "/more_info_GitHub"]
 ]
 
@@ -323,72 +323,72 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #         await update.message.reply_text(f"❌ Grafana 圖表失敗: {e}\n\n💡 建議使用 Prometheus 圖表:\n`/prom_chart {agent_id} agent_{metric_type}_usage_percent`")
 
 # Prometheus 數據圖表生成
-async def create_prometheus_chart(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_user_allowed(update.effective_user.id):
-        await update.message.reply_text("🚫 沒有權限")
-        return
+# async def create_prometheus_chart(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     if not is_user_allowed(update.effective_user.id):
+#         await update.message.reply_text("🚫 沒有權限")
+#         return
         
-    if len(context.args) < 2:
-        await update.message.reply_text("⚠️ 使用格式: /prom_chart <agent_id> <metric>\n例如: /prom_chart agent1 agent_cpu_usage_percent")
-        return
+#     if len(context.args) < 2:
+#         await update.message.reply_text("⚠️ 使用格式: /prom_chart <agent_id> <metric>\n例如: /prom_chart agent1 agent_cpu_usage_percent")
+#         return
     
-    agent_id = context.args[0]
-    metric = context.args[1]
+#     agent_id = context.args[0]
+#     metric = context.args[1]
     
-    try:
-        # 查詢 Prometheus
-        prom_url = os.getenv("PROMETHEUS_URL", "http://localhost:9090")
-        query = f'{metric}{{instance="{agent_id}:8001"}}'
+#     try:
+#         # 查詢 Prometheus
+#         prom_url = os.getenv("PROMETHEUS_URL", "http://localhost:9090")
+#         query = f'{metric}{{instance="{agent_id}:8001"}}'
         
-        end_time = datetime.now()
-        start_time = end_time - timedelta(hours=1)
+#         end_time = datetime.now()
+#         start_time = end_time - timedelta(hours=1)
         
-        params = {
-            'query': query,
-            'start': start_time.isoformat(),
-            'end': end_time.isoformat(),
-            'step': '60s'
-        }
+#         params = {
+#             'query': query,
+#             'start': start_time.isoformat(),
+#             'end': end_time.isoformat(),
+#             'step': '60s'
+#         }
         
-        response = requests.get(f"{prom_url}/api/v1/query_range", params=params, timeout=30)
-        data = response.json()
+#         response = requests.get(f"{prom_url}/api/v1/query_range", params=params, timeout=30)
+#         data = response.json()
         
-        if data['status'] != 'success' or not data['data']['result']:
-            await update.message.reply_text(f"❌ 沒有找到 {metric} 的數據")
-            return
+#         if data['status'] != 'success' or not data['data']['result']:
+#             await update.message.reply_text(f"❌ 沒有找到 {metric} 的數據")
+#             return
         
-        # 繪製圖表
-        plt.figure(figsize=(12, 6))
-        for result in data['data']['result']:
-            values = result['values']
-            timestamps = [datetime.fromtimestamp(float(v[0])) for v in values]
-            metrics = [float(v[1]) for v in values]
+#         # 繪製圖表
+#         plt.figure(figsize=(12, 6))
+#         for result in data['data']['result']:
+#             values = result['values']
+#             timestamps = [datetime.fromtimestamp(float(v[0])) for v in values]
+#             metrics = [float(v[1]) for v in values]
             
-            plt.plot(timestamps, metrics, label=f"{agent_id}-{metric}", linewidth=2)
+#             plt.plot(timestamps, metrics, label=f"{agent_id}-{metric}", linewidth=2)
         
-        plt.title(f'{metric} - {agent_id}', fontsize=14, fontweight='bold')
-        plt.xlabel('時間')
-        plt.ylabel('數值')
-        plt.legend()
-        plt.xticks(rotation=45)
-        plt.grid(True, alpha=0.3)
-        plt.tight_layout()
+#         plt.title(f'{metric} - {agent_id}', fontsize=14, fontweight='bold')
+#         plt.xlabel('時間')
+#         plt.ylabel('數值')
+#         plt.legend()
+#         plt.xticks(rotation=45)
+#         plt.grid(True, alpha=0.3)
+#         plt.tight_layout()
         
-        # 儲存並發送
-        chart_path = f'/tmp/{agent_id}_{metric}_chart.png'
-        plt.savefig(chart_path, dpi=150, bbox_inches='tight')
-        plt.close()
+#         # 儲存並發送
+#         chart_path = f'/tmp/{agent_id}_{metric}_chart.png'
+#         plt.savefig(chart_path, dpi=150, bbox_inches='tight')
+#         plt.close()
         
-        with open(chart_path, 'rb') as photo:
-            await update.message.reply_photo(
-                photo=photo,
-                caption=f"📊 {agent_id} - {metric} 監控圖表 (最近1小時)"
-            )
+#         with open(chart_path, 'rb') as photo:
+#             await update.message.reply_photo(
+#                 photo=photo,
+#                 caption=f"📊 {agent_id} - {metric} 監控圖表 (最近1小時)"
+#             )
         
-        os.remove(chart_path)
+#         os.remove(chart_path)
         
-    except Exception as e:
-        await update.message.reply_text(f"❌ 圖表生成失敗: {e}")
+#     except Exception as e:
+#         await update.message.reply_text(f"❌ 圖表生成失敗: {e}")
 
 start_test="""
 🤖 這裡是 SeeServerHealth Agent-Server 架構版本！\n
@@ -396,15 +396,21 @@ start_test="""
 🔧 Agent 管理
 - /agents 查看所有可用的 agents
 - /broadcast <cmd> 廣播指令到所有 agents\n
-🖥️ Server 控制 (需指定 agent)
+🖥 Server 控制 (需指定 agent)
 - /op_exec <agent_id> <cmd> 在指定 agent 執行 shell 指令
-- /op_port <agent_id> 查看指定 agent 的開啟 port
+- /op_port <agent_i> 查看指定 agent 的開啟 port
 - /op_stop <agent_id> <port> 關閉指定 agent 的 port\n
-📊 監控數據 (需指定 agent)
-- /mon_cpu <agent_id> 顯示指定 agent 的 CPU 使用率
-- /mon_mem <agent_id> 顯示指定 agent 的記憶體使用率
-- /mon_disk <agent_id> 顯示指定 agent 的磁碟使用率\n
-例如: /op_exec agent1 ls -l 或 /mon_cpu agent1
+📊 監控數據
+- /mon_cpu 顯示 server 的 CPU 使用率
+- /mon_cpu <agent_ip> 顯示指定 agent 的 CPU 使用率
+- /mon_mem <agent_ip> 顯示指定 agent 的記憶體使用率
+- /mon_disk <agent_ip> 顯示指定 agent 的磁碟使用率\n
+- /mon_cpu_picture 顯示 server 5 分鐘前到現在的 CPU 使用率
+- /mon_cpu_picture <agent_ip> 顯示指定 agent 5 分鐘前到現在的 CPU 使用率
+- /mon_cpu_picture <agent_ip> <參數> 顯示指定 agent ?分鐘前到現在 CPU 使用率的圖片
+- /mon_cpu_picture <agent_ip> <時間> <參數> 顯示指定 agent <時間> 前後 ? 分鐘內的CPU 使用率的圖片
+cpu 可以換成 mem 或 disk 可以查看記憶體與磁碟使用率
+
 """
 
 # /start 指令時顯示自訂鍵盤
@@ -429,7 +435,7 @@ async def more(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 #GitHub link
 async def more_info_GitHub(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    web_terminal_url="https://github.com/cyleafish/See-Server-Health/tree/main"
+    web_terminal_url="https://github.com/cyleafish/See_Servers_Health_plus/tree/main"
     out_text= "請點以下網址查看 GitHub\n"+web_terminal_url
     await update.message.reply_text(
             out_text,

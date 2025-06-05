@@ -155,27 +155,44 @@ PROMETHEUS_URL = 'http://localhost:9090'
 
 # 判斷是否為 instance（ip:port）
 def is_instance(s):
-    return ':' in s
+    agent_file="agent_name_ip.txt"
+    agent_name_ip={}
+    with open(agent_file, "r") as f:
+        for line in f:
+            if not line.strip():
+                continue  # 跳過空行
+            try:
+                name, ip = line.strip().split()
+                agent_name_ip[name]=ip
+            except ValueError:
+                print(f"⚠️ 格式錯誤（應為名稱 空格 IP:PORT）→ {line.strip()}")
+    if (':' in s):
+        return True, s
+    if not s.isdigit():
+        #agent_name_ip[s]
+        return True, agent_name_ip[s]
+    return False, s
 
 # 處理參數，傳回 instance, start, end
 def parse_disk_picture_args(args):
     now = datetime.now()
     instance = os.getenv("your_server_ip")
     if not args:
-        # /mem_picture
         start = now - timedelta(minutes=5)
         end = now
     elif len(args) == 1:
-        if is_instance(args[0]):
-            instance = args[0]
+        yn, resolved = is_instance(args[0])
+        if yn:
+            instance = resolved
             start = now - timedelta(minutes=5)
             end = now
         else:
             start = now - timedelta(minutes=int(args[0]))
             end = now
     elif len(args) == 2:
-        if is_instance(args[0]):
-            instance = args[0]
+        yn, resolved = is_instance(args[0])
+        if yn:
+            instance = resolved
             start = now - timedelta(minutes=int(args[1]))
             end = now
         else:
@@ -186,7 +203,8 @@ def parse_disk_picture_args(args):
             start = center - timedelta(minutes=offset)
             end = center + timedelta(minutes=offset)
     elif len(args) == 3:
-        instance = args[0]
+        yn, resolved = is_instance(args[0])
+        instance = resolved if yn else args[0]
         center = datetime.strptime(args[1], "%H%M").replace(
             year=now.year, month=now.month, day=now.day
         )
@@ -195,15 +213,14 @@ def parse_disk_picture_args(args):
         end = center + timedelta(minutes=offset)
     else:
         raise ValueError("參數格式錯誤")
-
     return instance, start, end
 
 
 # 查即時 disk 使用率
 async def mon_disk(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
-    if args and is_instance(args[0]):
-        instance = args[0]
+    if args:
+        yn, instance = is_instance(args[0])
     else:
         instance = os.getenv("your_server_ip")
     query = f'''(1 - (
