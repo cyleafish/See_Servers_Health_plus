@@ -26,7 +26,7 @@ def is_instance(s):
     return ':' in s
 
 # 處理參數，傳回 instance, start, end
-def parse_disk_picture_args(args):
+def parse_mem_picture_args(args):
     now = datetime.now()
     instance = os.getenv("your_server_ip")
     if not args:
@@ -67,44 +67,36 @@ def parse_disk_picture_args(args):
     return instance, start, end
 
 
-# 查即時 disk 使用率
-async def mon_disk(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# 查即時 CPU 使用率
+async def mon_mem(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     if args and is_instance(args[0]):
         instance = args[0]
     else:
         instance = os.getenv("your_server_ip")
-    query = f'''(1 - (
-        node_filesystem_avail_bytes{{mountpoint="/",fstype!="rootfs",instance="{instance}"}} /
-        node_filesystem_size_bytes{{mountpoint="/",fstype!="rootfs",instance="{instance}"}}
-    )) * 100'''
-
+    query = f'(1 - (node_memory_MemAvailable_bytes{{instance="{instance}"}} / node_memory_MemTotal_bytes{{instance="{instance}"}})) * 100'
     response = requests.get(f"{PROMETHEUS_URL}/api/v1/query", params={"query": query})
     result = response.json().get('data', {}).get('result', [])
 
     if not result:
-        await update.message.reply_text(f"⚠️ 找不到 {instance} 的即時 Disk 資料")
+        await update.message.reply_text(f"⚠️ 找不到 {instance} 的即時 Memory 資料")
         return
 
     value = float(result[0]['value'][1])
     timestamp = datetime.fromtimestamp(float(result[0]['value'][0]))
-    await update.message.reply_text(f"🖥️ {instance} 即時 Disk 使用率：{value:.2f}%（時間：{timestamp.strftime('%H:%M:%S')}）")
+    await update.message.reply_text(f"🖥️ {instance} 即時 Memory 使用率：{value:.2f}%（時間：{timestamp.strftime('%H:%M:%S')}）")
 
 
-# 查區段內 Disk 使用率並畫圖
-async def mon_disk_picture(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# 查區段內 CPU 使用率並畫圖
+async def mon_mem_picture(update: Update, context: ContextTypes.DEFAULT_TYPE):
     instance = os.getenv("your_server_ip")
     try:
         args = context.args
-        instance, start, end = parse_disk_picture_args(args)
+        instance, start, end = parse_mem_picture_args(args)
     except Exception as e:
         await update.message.reply_text(f"⚠️ 指令錯誤：{e}")
         return
-    query = f'''(1 - (
-        node_filesystem_avail_bytes{{mountpoint="/",fstype!="rootfs",instance="{instance}"}} /
-        node_filesystem_size_bytes{{mountpoint="/",fstype!="rootfs",instance="{instance}"}}
-    )) * 100'''
-
+    query = f'(1 - (node_memory_MemAvailable_bytes{{instance="{instance}"}} / node_memory_MemTotal_bytes{{instance="{instance}"}})) * 100'
     response = requests.get(
         f"{PROMETHEUS_URL}/api/v1/query_range",
         params={
@@ -117,24 +109,24 @@ async def mon_disk_picture(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     data = response.json().get('data', {}).get('result', [])
     if not data:
-        await update.message.reply_text(f"❌ 找不到 {instance} 的 Disk 資料，請確認 node_exporter 是否有啟動")
+        await update.message.reply_text(f"❌ 找不到 {instance} 的 Memory 資料，請確認 node_exporter 是否有啟動")
         return
 
     timestamps = [datetime.fromtimestamp(float(x[0])) for x in data[0]['values']]
     values = [float(x[1]) for x in data[0]['values']]
 
     plt.figure(figsize=(10, 4))
-    plt.plot(timestamps, values, label='Disk Usage %', color='purple', linewidth=3, linestyle='--')
-    plt.title(f'{instance} 的 Disk 使用率')
+    plt.plot(timestamps, values, label='Memory Usage %', color='blue', linewidth=3, linestyle='--')
+    plt.title(f'{instance} 的 Memory 使用率')
     plt.xlabel('時間')
     plt.ylabel('%')
     plt.ylim(0, 100)
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig('disk_usage.png')
+    plt.savefig('mem_usage.png')
     plt.close()
 
-    with open('disk_usage.png', 'rb') as photo:
+    with open('mem_usage.png', 'rb') as photo:
         await update.message.reply_photo(photo=photo)
 
 

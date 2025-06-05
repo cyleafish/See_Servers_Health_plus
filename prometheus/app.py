@@ -14,8 +14,8 @@ TOKEN = os.getenv("your_bot_token")
 
 #from op import op_exec
 from cpu_test import mon_cpu_picture, mon_cpu
-from mem import mon_mem_picture, mon_mem
-from disk import mon_disk_picture, mon_disk
+from mem_test import mon_mem_picture, mon_mem
+from disk_test import mon_disk_picture, mon_disk
 
 OPERATOR_URL = "http://localhost:8000/exec"  # 你本機跑的控制 API
 PROMETHEUS_URL = "http://localhost:9090"
