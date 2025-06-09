@@ -1,6 +1,5 @@
 # See_Servers_Health_plus
 
-[TOC]
 ## See_Servers_Health_plus 介紹
 
 :information_source: 是 [See_Server_Health](https://github.com/cyleafish/See-Server-Health) 的進階版
@@ -37,7 +36,7 @@ See-Servers-Health_plus/
 │   ├── cpu.py
 │   └── (disk.py ...)
 ├── promethues/             # Prometheus 的設定檔
-│   ├── docker-compose.yml  # 抓取監控資料
+│    ├── docker-compose.yml  # 抓取監控資料
 ├────├── promethues/ 
 │    ├────── prometheus.yml 
 │    └────── alert.rules
@@ -67,8 +66,7 @@ See-Servers-Health_plus/Agent/
 └──  └── (login_watcher.py ...)
 ```
 ## 使用方法
-### 環境
-#### Telegram Bot 教學
+### Telegram Bot 教學
 :information_source: 如何獲得上述 `<your_bot_token>` 與 `your_telegram_id`，這邊教你如何新增自己的 Telegram Bot 
 - 打開 Telegram，搜尋 @BotFather
 ![image](https://hackmd.io/_uploads/Syc9dXXCyx.png)
@@ -84,7 +82,7 @@ See-Servers-Health_plus/Agent/
 `https://api.telegram.org/bot<YourBotToken>/getUpdates` 並找出 id
 ![image](https://hackmd.io/_uploads/rkFLn4tRJe.png)
 
-#### Agent 環境設定指南 
+### Agent 環境設定指南 
 - Agent 會用到的 port(使用時需避免撞到)：
     - 8001: agent.py
     - 9100: node exproter
@@ -110,7 +108,7 @@ See-Servers-Health_plus/Agent/
 - 最後執行 `agent.py`
     - `./agent.py`
 
-#### Server 設定指南 
+### Server 設定指南 
 - Server 會使用到的 port(使用時需避免撞到)：
     - 3000: grafana -> 不會用到
     - 8002: server.py
