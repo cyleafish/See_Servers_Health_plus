@@ -1,0 +1,76 @@
+groups:
+- name: agent_alerts
+  rules:
+
+  # Agent 服務下線告警
+  - alert: AgentDown
+    expr: up{job="agents"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Agent {{ $labels.instance }} is down"
+      description: "Agent {{ $labels.instance }} has been down for more than 1 minute."
+
+  # Agent CPU 使用率過高
+  - alert: AgentHighCPU
+    expr: agent_cpu_usage_percent > 80
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Agent {{ $labels.agent_id }} high CPU usage"
+      description: "Agent {{ $labels.agent_id }} CPU usage is {{ $value }}% for more than 2 minutes."
+
+  # Agent 記憶體使用率過高
+  - alert: AgentHighMemory
+    expr: agent_memory_usage_percent > 85
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Agent {{ $labels.agent_id }} high memory usage"
+      description: "Agent {{ $labels.agent_id }} memory usage is {{ $value }}% for more than 2 minutes."
+
+  # Agent 磁碟使用率過高
+  - alert: AgentHighDisk
+    expr: agent_disk_usage_percent > 90
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Agent {{ $labels.agent_id }} high disk usage"
+      description: "Agent {{ $labels.agent_id }} disk usage is {{ $value }}% for more than 1 minute."
+
+- name: system_alerts
+  rules:
+
+  # 任何服務下線告警
+  - alert: ServiceDown
+    expr: up == 0
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Service {{ $labels.instance }} is down"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 2 minutes."
+
+  # Node Exporter 高負載告警
+  - alert: HighLoad
+    expr: node_load1 > 0.8
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Instance {{ $labels.instance }} under high load"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} is under high load ({{ $value }})."
+
+  # Node Exporter 記憶體使用率過高
+  - alert: HighMemoryUsage
+    expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Instance {{ $labels.instance }} high memory usage"
+      description: "{{ $labels.instance }} memory usage is above 85% ({{ $value }}%)."

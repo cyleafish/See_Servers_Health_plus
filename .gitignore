@@ -1,0 +1,7 @@
+.env
+**/__pycache__/
+/systemd
+AGENT_SETUP.md
+Dockerfile.agent
+docker-compose-agent-server.yml
+

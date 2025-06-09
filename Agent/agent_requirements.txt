@@ -1,0 +1,6 @@
+# Agent 專用依賴
+flask
+requests
+python-dotenv
+psutil
+prometheus_client
