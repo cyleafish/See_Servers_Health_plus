@@ -54,3 +54,10 @@ scrape_configs:
 
     static_configs:
       - targets: ['10.107.12.213:9100']
+  - job_name: 'Agent3'
+
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 15s
+
+    static_configs:
+      - targets: ['10.107.45.158:9100']

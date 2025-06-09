@@ -56,19 +56,18 @@ class LoginWatcher:
                         continue
                     
                     # 檢查失敗登入
-                    if any(kw in line for kw in ["Failed password", "authentication failure"]):
+                    if any(kw in line for kw in ["Failed password", "authentication failure", "invalid user"]):
                         alert_msg = f"🚫 [{self.agent_id}] 登入失敗嘗試：\n{line.strip()}"
                         self.send_alert_to_server(alert_msg)
-                    
-                    # 檢查成功登入
-                    elif any(kw in line for kw in ["Accepted password", "session opened", "New session"]):
-                        alert_msg = f"⚠️ [{self.agent_id}] 使用者登入：\n{line.strip()}"
+
+                    elif any(kw in line for kw in ["Accepted password", "session opened", "New session", "sshd:session"]):
+                        alert_msg = f"⚠️ [{self.agent_id}] 登入成功/啟動 session：\n{line.strip()}"
                         self.send_alert_to_server(alert_msg)
-                    
-                    # 檢查 SSH 連線
-                    elif "sshd" in line and "Connection from" in line:
-                        alert_msg = f"🔌 [{self.agent_id}] SSH 連線：\n{line.strip()}"
+
+                    elif "sshd" in line and "Disconnected from user" in line:
+                        alert_msg = f"🔌 [{self.agent_id}] SSH session 結束：\n{line.strip()}"
                         self.send_alert_to_server(alert_msg)
+
                         
         except Exception as e:
             print(f"❌ 登入監控錯誤: {e}")
