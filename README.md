@@ -155,12 +155,11 @@ See-Servers-Health_plus/Agent/
     - `docker compose up --build`
 - 啟動 Telegram Bot..."
 python3 app.py
-:::info
+:information_source:
 若有改動 agent_name_ip.txt，要執行以下步驟做更新：
 - `python3 auto_yml.py`：重新生成新的 .yml
 - `cd prometheus`
 - `docker compose restart`：重新執行 docker
-:::
 
 ## DEMO
 - 在 Telegram 輸入 `/start` 後就可以開始使用
@@ -191,11 +190,10 @@ python3 app.py
     - `/mon_cpu_picture <agent_ip>或<agent_name> <參數>` 顯示指定 agent ? 分鐘前到現在 CPU 使用率折線圖
     - ![image](https://hackmd.io/_uploads/HJSOtPVQlg.png)
     - `/mon_cpu_picture <agent_ip>或<agent_name> <時間> <參數>` 顯示 指定 agent <時間> 前後 ? 分鐘內的 CPU 使用率的折線圖
-:::info
+:information_source:
 格式補充說明
 <參數>：分鐘
 <時間>：hhmm 24小時制
-:::
 
 #### 警告範例
 - 登入警告
